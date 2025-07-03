@@ -4,8 +4,10 @@ from django.core.exceptions import ValidationError
 from apis.serializers.score_serializer import LeaderboardEntrySerializer
 from apis.services.top_player_service import get_top_n
 from apis.models.leaderboard import Leaderboard
+from rest_framework.permissions import AllowAny
 
 class TopLeaderboardAPI(generics.ListAPIView):
+    permission_classes = [AllowAny]
     """
     API endpoint to retrieve the top N leaderboard entries.
     

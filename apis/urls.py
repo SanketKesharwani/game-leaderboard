@@ -8,5 +8,5 @@ app_name = 'leaderboard'
 urlpatterns = [
     path('leaderboard/submit/', SubmitScoreAPI.as_view(), name='submit-score'),
     path('leaderboard/top/', TopLeaderboardAPI.as_view(), name='top-leaderboard'),
-    path('leaderboard/rank/', UserRankAPI.as_view(), name='user-rank'),
+    path('leaderboard/rank/<int:user_id>/', UserRankAPI.as_view(), name='user-rank'),
 ]

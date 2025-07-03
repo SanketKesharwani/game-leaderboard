@@ -5,8 +5,10 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from apis.serializers.leaderboard_serializer import ScoreSubmissionSerializer
 from apis.services.submit_score_service import submit_score
+from rest_framework.permissions import IsAuthenticated
 
 class SubmitScoreAPI(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
     """
     API endpoint for submitting a user's game score.
     
@@ -32,15 +34,13 @@ class SubmitScoreAPI(generics.GenericAPIView):
         """
         try:
             submission_data: Dict[str, Any] = request.data.copy()
-            submission_data['user_id'] = request.user.id
-            
             serializer: ScoreSubmissionSerializer = self.get_serializer(data=submission_data)
             serializer.is_valid(raise_exception=True)
             
             updated_total, new_rank = submit_score(**serializer.validated_data)
             
             response_data: Dict[str, Any] = {
-                "user_id": request.user.id,
+                "user_id": serializer.validated_data.get("user_id"),
                 "new_total": updated_total,
                 "rank": new_rank
             }

@@ -5,6 +5,7 @@ from rest_framework.request import Request
 from apis.serializers.score_serializer import LeaderboardEntrySerializer
 from apis.services.ranking_service import get_user_rank
 from apis.models.leaderboard import Leaderboard
+from rest_framework.permissions import IsAuthenticated
 
 class UserRankAPI(generics.RetrieveAPIView):
     """
@@ -20,11 +21,12 @@ class UserRankAPI(generics.RetrieveAPIView):
         ValidationError: If there is an error retrieving the rank data
         Exception: For any unexpected errors during processing
     """
+    permission_classes = [IsAuthenticated]
     serializer_class: type[LeaderboardEntrySerializer] = LeaderboardEntrySerializer
 
     def get_object(self) -> Leaderboard:
         """
-        Retrieves the authenticated user's rank information.
+        Retrieves the specified user's rank information based on user_id from the URL.
         
         Returns:
             Leaderboard: Object containing user's rank and score details
@@ -34,7 +36,7 @@ class UserRankAPI(generics.RetrieveAPIView):
             Exception: For any unexpected errors
         """
         try:
-            user_id: int = self.request.user.id
+            user_id: int = int(self.kwargs.get('user_id'))
             user_rank_data: Leaderboard = get_user_rank(user_id)
             return user_rank_data
             
