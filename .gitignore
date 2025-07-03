@@ -4,6 +4,8 @@
 *.pyc
 __pycache__/
 db.sqlite3
+.DS_Store
+dump.rdb
 media/
 staticfiles/
 
