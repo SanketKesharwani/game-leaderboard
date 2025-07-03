@@ -11,6 +11,7 @@ class Leaderboard(models.Model):
 
     class Meta:
         unique_together = ("user",)
+        indexes = [models.Index(fields=['-total_score'])]
 
     def __str__(self):
         return f"#{self.rank} {self.user}: {self.total_score}"
