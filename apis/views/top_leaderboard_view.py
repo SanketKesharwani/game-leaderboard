@@ -1,42 +1,65 @@
-from typing import List
-from rest_framework import generics
-from django.core.exceptions import ValidationError
+from typing import List, Dict, Any
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.request import Request
 from apis.serializers.score_serializer import LeaderboardEntrySerializer
-from apis.services.top_player_service import get_top_n
-from apis.models.leaderboard import Leaderboard
+from apis.services.top_player_service import get_top_n_players
 from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
+from apis.decorators.exception_handling import handle_api_exceptions
 
-class TopLeaderboardAPI(generics.ListAPIView):
+class TopLeaderboardAPI(APIView):
+    """
+    API endpoint for retrieving top leaderboard entries.
+    
+    This view handles fetching the top ranked players from the leaderboard:
+    - No authentication required (open endpoint)
+    - Returns a configurable number of top players
+    - Includes rank, score and user details
+    
+    Attributes:
+        permission_classes (list): List of permission classes allowing public access
+        serializer_class (LeaderboardEntrySerializer): Serializer for leaderboard entries
+    """
     permission_classes = [AllowAny]
-    """
-    API endpoint to retrieve the top N leaderboard entries.
-    
-    This endpoint is open to all users and returns the top ranked players.
-    Uses caching for performance optimization and includes rate limiting 
-    for abuse prevention.
-    
-    Returns:
-        List[Leaderboard]: A list of the top N leaderboard entries, ordered by rank
-        
-    Raises:
-        ValidationError: If there is an error retrieving the leaderboard data
-        Exception: For any unexpected errors during processing
-    """
     serializer_class = LeaderboardEntrySerializer
 
-    def get_queryset(self) -> List[Leaderboard]:
+    @handle_api_exceptions
+    def get(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         """
-        Retrieve the top 10 leaderboard entries.
+        Process a GET request to retrieve top leaderboard entries.
+
+        This method:
+        1. Fetches the top N players from the leaderboard service
+        2. Serializes the leaderboard data
+        3. Returns formatted response with player rankings
         
-        Returns:
-            List[Leaderboard]: The top 10 leaderboard entries
+        Args:
+            request (Request): Django REST framework request object
+            *args: Variable length argument list
+            **kwargs: Arbitrary keyword arguments
             
+        Returns:
+            Response: JSON response containing list of top players with:
+                - user_id (int): Player's unique identifier
+                - username (str): Player's display name  
+                - total_score (int): Player's cumulative score
+                - rank (int): Player's leaderboard position
+                
         Raises:
-            ValidationError: If there is an error retrieving the data
+            ValidationError: When leaderboard data cannot be retrieved
+            Exception: For unexpected processing errors
         """
-        try:
-            return get_top_n(10)
-        except ValidationError as e:
-            raise ValidationError(f"Failed to retrieve leaderboard: {str(e)}")
-        except Exception as e:
-            raise Exception(f"Unexpected error retrieving leaderboard: {str(e)}")
+        # Fetch top players from service layer
+        leaderboard_entries: List[Dict[str, Any]] = get_top_n_players(number_of_players=10)
+        
+        # Serialize leaderboard data
+        serializer: LeaderboardEntrySerializer = self.serializer_class(
+            leaderboard_entries, 
+            many=True
+        )
+
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_200_OK
+        )
