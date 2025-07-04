@@ -5,3 +5,8 @@ django-rest-framework==0.1.0
 djangorestframework==3.16.0
 redis==6.2.0
 sqlparse==0.5.3
+react==19.1.0
+react-dom==19.1.0
+react-scripts==5.0.1
+cra-template-pwa==2.0.0
+web-vitals==5.0.3 
