@@ -20,7 +20,7 @@ class UserRankAPI(generics.RetrieveAPIView):
         permission_classes (list): List of permission classes requiring authentication
         serializer_class (LeaderboardEntrySerializer): Serializer for rank data
     """
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     serializer_class = LeaderboardEntrySerializer
 
     @handle_api_exceptions

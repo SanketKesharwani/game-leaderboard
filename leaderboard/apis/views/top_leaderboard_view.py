@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from apis.serializers.score_serializer import LeaderboardEntrySerializer
 from apis.services.top_player_service import get_top_n_players
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from apis.decorators.exception_handling import handle_api_exceptions
 
@@ -21,7 +21,7 @@ class TopLeaderboardAPI(APIView):
         permission_classes (list): List of permission classes allowing public access
         serializer_class (LeaderboardEntrySerializer): Serializer for leaderboard entries
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     serializer_class = LeaderboardEntrySerializer
 
     @handle_api_exceptions

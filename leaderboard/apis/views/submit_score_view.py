@@ -21,7 +21,7 @@ class SubmitScoreAPI(generics.GenericAPIView):
         permission_classes (list): List of permission classes requiring authentication
         serializer_class (ScoreSubmissionSerializer): Serializer for score validation
     """
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     serializer_class = ScoreSubmissionSerializer
 
     @handle_api_exceptions
