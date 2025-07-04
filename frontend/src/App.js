@@ -17,6 +17,14 @@ function App() {
   const [loadingUser, setLoadingUser] = useState(false);
   const [userError, setUserError] = useState('');
 
+  // Submit Score states
+  const [scoreUserId, setScoreUserId] = useState('');
+  const [scoreValue, setScoreValue] = useState('');
+  const [scoreGameMode, setScoreGameMode] = useState('');
+  const [scoreLoading, setScoreLoading] = useState(false);
+  const [scoreResult, setScoreResult] = useState(null);
+  const [scoreError, setScoreError] = useState('');
+
   // Login handler
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -79,6 +87,34 @@ function App() {
       setUserError('User not found or error fetching data');
     }
     setLoadingUser(false);
+  };
+
+  // Submit Score handler
+  const handleSubmitScore = async (e) => {
+    e.preventDefault();
+    setScoreLoading(true);
+    setScoreError('');
+    setScoreResult(null);
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/v1/leaderboard/submit/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          user_id: scoreUserId,
+          score: scoreValue,
+          game_mode: scoreGameMode
+        })
+      });
+      if (!res.ok) throw new Error('Failed to submit score');
+      const data = await res.json();
+      setScoreResult(data);
+    } catch (err) {
+      setScoreError('Error submitting score');
+    }
+    setScoreLoading(false);
   };
 
   React.useEffect(() => {
@@ -160,6 +196,42 @@ function App() {
                 <p><strong>Username:</strong> {userRank.username}</p>
                 <p><strong>Rank:</strong> {userRank.rank}</p>
                 <p><strong>Score:</strong> {userRank.total_score}</p>
+              </div>
+            )}
+          </section>
+          <section style={{ marginTop: '2rem' }}>
+            <h2>Submit User Score</h2>
+            <form onSubmit={handleSubmitScore} className="submit-score-form">
+              <input
+                type="number"
+                placeholder="User ID"
+                value={scoreUserId}
+                onChange={e => setScoreUserId(e.target.value)}
+                required
+              />
+              <input
+                type="number"
+                placeholder="Score"
+                value={scoreValue}
+                onChange={e => setScoreValue(e.target.value)}
+                required
+              />
+              <input
+                type="text"
+                placeholder="Game Mode"
+                value={scoreGameMode}
+                onChange={e => setScoreGameMode(e.target.value)}
+                required
+              />
+              <button type="submit" disabled={scoreLoading}>Submit</button>
+            </form>
+            {scoreLoading && <p>Submitting...</p>}
+            {scoreError && <p style={{ color: 'red' }}>{scoreError}</p>}
+            {scoreResult && (
+              <div className="score-result">
+                <p><strong>User ID:</strong> {scoreResult.user_id}</p>
+                <p><strong>New Total:</strong> {scoreResult.new_total}</p>
+                <p><strong>Rank:</strong> {scoreResult.rank}</p>
               </div>
             )}
           </section>
