@@ -8,6 +8,7 @@ db.sqlite3
 dump.rdb
 media/
 staticfiles/
+newrelic.ini
 
 # VSCode
 .vscode/
