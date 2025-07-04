@@ -1,26 +1,44 @@
 import requests
 import random
 import time
+from django.core.management.base import BaseCommand
 
-API_BASE_URL = "http://localhost:8000/api/v1/leaderboard"
+API_BASE_URL = "http://127.0.0.1:8000/api/v1/leaderboard"
+JWT_TOKEN_URL = "http://127.0.0.1:8000/api/v1/auth/login/"
+USERNAME = "admin"
+PASSWORD = "admin"
 
-def submit_score(user_id):
+def get_jwt_token():
+    response = requests.post(JWT_TOKEN_URL, data={"username": USERNAME, "password": PASSWORD})
+    response.raise_for_status()
+    return response.json()["access"]
+
+def submit_score(user_id, headers):
     score = random.randint(100, 10000)
     game_mode = random.choice(["solo", "team"])
-    requests.post(f"{API_BASE_URL}/submit", json={"user_id": user_id, "score": score, "game_mode": game_mode})
+    requests.post(
+        f"{API_BASE_URL}/submit/",
+        json={"user_id": user_id, "score": score, "game_mode": game_mode},
+        headers=headers
+    )
 
-def get_top_players():
-    response = requests.get(f"{API_BASE_URL}/top")
+def get_top_players(headers):
+    response = requests.get(f"{API_BASE_URL}/top/", headers=headers)
     return response.json()
 
-def get_user_rank(user_id):
-    response = requests.get(f"{API_BASE_URL}/rank/{user_id}")
+def get_user_rank(user_id, headers):
+    response = requests.get(f"{API_BASE_URL}/rank/{user_id}/", headers=headers)
     return response.json()
 
-if __name__ == "__main__":
-    while True:
-        user_id = random.randint(1, 1000000)
-        submit_score(user_id)
-        print(get_top_players())
-        print(get_user_rank(user_id))
-        time.sleep(1)  # Add a delay to avoid spamming the server 
+class Command(BaseCommand):
+    help = 'Simulates users submitting scores and prints leaderboard updates.'
+
+    def handle(self, *args, **options):
+        token = get_jwt_token()
+        headers = {"Authorization": f"Bearer {token}"}
+        while True:
+            user_id = random.randint(1, 20)
+            submit_score(user_id, headers)
+            print(get_top_players(headers))
+            print(get_user_rank(user_id, headers))
+            time.sleep(1)
