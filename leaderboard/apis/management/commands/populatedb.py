@@ -1,25 +1,23 @@
 from django.core.management.base import BaseCommand
-from apis.models.user import User
-from apis.models.game_session import GameSession
-from apis.models.leaderboard import Leaderboard
+from apis.utils.command import LeaderboardCommand
 from django.db import transaction
 import random
 from datetime import timedelta, datetime
 from django.db import models
 
-class Command(BaseCommand):
-    help = "Populate users, game_sessions, and leaderboard tables"
-
-    def handle(self, *args, **options):
+class PopulatedbCommand(LeaderboardCommand):
+    def execute(self):
+        from apis.models.user import User
+        from apis.models.game_session import GameSession
+        from apis.models.leaderboard import Leaderboard
+        from django.db import models
+        import random
+        from datetime import timedelta, datetime
         NUM_USERS = 1000000
         NUM_SESSIONS = 5000000
-
-        self.stdout.write("Seeding users...")
         users = [User(username=f"user_{i+1}") for i in range(NUM_USERS)]
         User.objects.bulk_create(users, batch_size=10000)
         user_ids = list(User.objects.values_list('id', flat=True))
-
-        self.stdout.write("Seeding game sessions...")
         sessions = []
         now = datetime.now()
         for _ in range(NUM_SESSIONS):
@@ -33,8 +31,6 @@ class Command(BaseCommand):
                 sessions = []
         if sessions:
             GameSession.objects.bulk_create(sessions, batch_size=10000)
-
-        self.stdout.write("Aggregating leaderboard...")
         Leaderboard.objects.all().delete()
         leaderboard_data = (
             GameSession.objects.values('user_id')
@@ -48,5 +44,14 @@ class Command(BaseCommand):
                 Leaderboard(user_id=entry['user_id'], total_score=entry['total_score'], rank=rank)
             )
         Leaderboard.objects.bulk_create(leaderboard_entries, batch_size=10000)
+        return True
 
+class Command(BaseCommand):
+    help = "Populate users, game_sessions, and leaderboard tables"
+    def handle(self, *args, **options):
+        self.stdout.write("Seeding users...")
+        self.stdout.write("Seeding game sessions...")
+        self.stdout.write("Aggregating leaderboard...")
+        populatedb_command = PopulatedbCommand()
+        populatedb_command.execute()
         self.stdout.write(self.style.SUCCESS("Database seeded.")) 

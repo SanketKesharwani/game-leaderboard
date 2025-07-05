@@ -3,9 +3,10 @@ from apis.models.leaderboard import Leaderboard
 from apis.models.user import User
 import redis
 from django.conf import settings
+from apis.utils.redis_singleton import get_redis_client
 
-# Initialize Redis client for leaderboard sorted set storage
-_redis_client = redis.Redis.from_url(settings.LEADERBOARD_ZSET_URL)
+# Use the singleton Redis client
+redis_client = get_redis_client()
 
 def get_user_rank(user_id: int) -> Dict[str, Union[int, str, None]]:
     """
@@ -25,7 +26,7 @@ def get_user_rank(user_id: int) -> Dict[str, Union[int, str, None]]:
         ValueError: If no user exists with the provided user_id
     """
     # Get user's score from Redis leaderboard
-    user_score: Optional[float] = _redis_client.zscore("leaderboard:zset", user_id)
+    user_score: Optional[float] = redis_client.zscore("leaderboard:zset", user_id)
     
     # Fetch username, raising ValueError if user doesn't exist
     try:
@@ -43,7 +44,7 @@ def get_user_rank(user_id: int) -> Dict[str, Union[int, str, None]]:
         }
     
     # Get user's rank (0-based index)
-    user_rank: Optional[int] = _redis_client.zrevrank("leaderboard:zset", user_id)
+    user_rank: Optional[int] = redis_client.zrevrank("leaderboard:zset", user_id)
     
     return {
         "user_id": user_id,

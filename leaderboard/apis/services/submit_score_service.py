@@ -7,9 +7,10 @@ from apis.models.user import User
 from django.core.exceptions import ObjectDoesNotExist
 import redis
 from django.conf import settings
+from apis.utils.redis_singleton import get_redis_client
 
-# Initialize Redis client for leaderboard sorted set storage
-redis_client: redis.Redis = redis.Redis.from_url(settings.LEADERBOARD_ZSET_URL)
+# Use the singleton Redis client
+redis_client = get_redis_client()
 
 def submit_score(user_id: int, score: int, game_mode: str) -> Tuple[int, int]:
     """
