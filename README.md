@@ -1,3 +1,1 @@
-Game Leaderboard — Setup & Technical Documentation
-
-https://deepwiki.com/SanketKesharwani/game-leaderboard
+Game Leaderboard — Setup & Technical Documentation [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SanketKesharwani/game-leaderboard)
