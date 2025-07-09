@@ -5,12 +5,12 @@ from apis.models.game_session import GameSession
 from apis.models.leaderboard import Leaderboard
 from apis.models.user import User
 from django.core.exceptions import ObjectDoesNotExist
-import redis
-from django.conf import settings
 from apis.utils.redis_singleton import get_redis_client
+from apis.utils.adapter import RedisCacheAdapter
 
 # Use the singleton Redis client
 redis_client = get_redis_client()
+cache_adapter = RedisCacheAdapter(redis_client)
 
 def submit_score(user_id: int, score: int, game_mode: str) -> Tuple[int, int]:
     """
@@ -38,7 +38,7 @@ def submit_score(user_id: int, score: int, game_mode: str) -> Tuple[int, int]:
     with transaction.atomic():
         try:
             # Acquire row-level lock on user record for atomic updates
-            current_user: User = User.objects.select_for_update().get(pk=user_id)
+            current_user: User = User.objects.get(pk=user_id)
         except ObjectDoesNotExist:
             raise ValueError(f"User with ID {user_id} does not exist")
 
@@ -71,11 +71,11 @@ def submit_score(user_id: int, score: int, game_mode: str) -> Tuple[int, int]:
         leaderboard_entry.save(update_fields=['rank'])
 
     # Update Redis sorted set with new total score
-    redis_client.zadd("leaderboard:zset", {user_id: int(leaderboard_entry.total_score)})
+    cache_adapter.zadd("leaderboard:zset", {user_id: int(leaderboard_entry.total_score)})
 
     # Retrieve final score and rank from Redis
-    final_score: Optional[float] = redis_client.zscore("leaderboard:zset", user_id)
-    final_rank: Optional[int] = redis_client.zrevrank("leaderboard:zset", user_id)
+    final_score: Optional[float] = cache_adapter.zscore("leaderboard:zset", user_id)
+    final_rank: Optional[int] = cache_adapter.zrevrank("leaderboard:zset", user_id)
 
     return (
         int(final_score if final_score is not None else 0),
